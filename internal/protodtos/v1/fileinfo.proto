@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+package internal.protodtos.v1;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "internal/protodtos";
+
+message FileMIME {
+  string name = 1;
+  string extension = 2;
+  string mime_type = 3;
+}
+
+message Envelope {
+  map<string, string> headers = 1;
+  uint32 status = 2;
+}
+
+message FileInformation {
+  FileMIME file_mime = 1;
+  Envelope envelope = 2;
+  bytes content = 3;
+  bytes checksum = 4;
+  google.protobuf.Timestamp created_at = 5;
+  google.protobuf.Timestamp modified_at = 6;
+  map<string, string> extra_metadata = 7;
+}
