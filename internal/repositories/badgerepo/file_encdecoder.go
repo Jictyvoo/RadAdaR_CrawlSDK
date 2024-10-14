@@ -43,15 +43,8 @@ func DecodeFileInfo(bytes []byte) (cacheproxy.FileInformation, error) {
 	}
 
 	fileInfo := cacheproxy.FileInformation{
-		FileMIME: cacheproxy.FileMIME{
-			Name:      protoFileInfo.FileMime.Name,
-			Extension: protoFileInfo.FileMime.Extension,
-			MimeType:  protoFileInfo.FileMime.MimeType,
-		},
-		Envelope: cacheproxy.FileEnvelope{
-			Headers: make(map[string][]string, len(protoFileInfo.Envelope.Headers)),
-			Status:  uint16(protoFileInfo.Envelope.Status),
-		},
+		FileMIME:      decodeFileMIME(protoFileInfo.FileMime),
+		Envelope:      decodeFileEnvelope(protoFileInfo.Envelope),
 		Content:       protoFileInfo.GetContent(),
 		Checksum:      protoFileInfo.GetChecksum(),
 		CreatedAt:     protoFileInfo.CreatedAt.AsTime(),
@@ -59,9 +52,26 @@ func DecodeFileInfo(bytes []byte) (cacheproxy.FileInformation, error) {
 		ExtraMetadata: protoFileInfo.GetExtraMetadata(),
 	}
 
-	for _, values := range protoFileInfo.Envelope.Headers {
-		fileInfo.Envelope.Headers[values] = strings.Split(values, ",")
+	return fileInfo, nil
+}
+
+func decodeFileMIME(protoMime *protodtos.FileMIME) cacheproxy.FileMIME {
+	return cacheproxy.FileMIME{
+		Name:      protoMime.GetName(),
+		Extension: protoMime.GetExtension(),
+		MimeType:  protoMime.GetMimeType(),
+	}
+}
+
+func decodeFileEnvelope(protoEnvelope *protodtos.Envelope) cacheproxy.FileEnvelope {
+	newEnvelope := cacheproxy.FileEnvelope{
+		Headers: make(map[string][]string, len(protoEnvelope.GetHeaders())),
+		Status:  uint16(protoEnvelope.GetStatus()),
 	}
 
-	return fileInfo, nil
+	for _, values := range protoEnvelope.GetHeaders() {
+		newEnvelope.Headers[values] = strings.Split(values, ",")
+	}
+
+	return newEnvelope
 }

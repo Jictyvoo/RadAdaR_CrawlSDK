@@ -1,18 +1,29 @@
 package cacheproxy
 
 import (
+	"bytes"
 	"crypto/sha256"
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"path/filepath"
+	"slices"
 	"strings"
 	"time"
 )
 
 func (proxy CacheableProxy) cacheKey(req *http.Request) string {
-	cacheKey := fmt.Sprintf("file://%s@%s", req.Method, req.URL.String())
-	return cacheKey
+	query, err := url.QueryUnescape(req.URL.RawQuery)
+	if err != nil {
+		query = req.URL.RawQuery
+	}
+	cacheKey := fmt.Sprintf(
+		"file://%s@%s#%s",
+		req.Method, proxy.targetURL.String(),
+		req.URL.Path+query,
+	)
+	return strings.TrimSpace(cacheKey)
 }
 
 func (proxy CacheableProxy) InterceptFile(resp *http.Response) error {
@@ -28,9 +39,9 @@ func (proxy CacheableProxy) InterceptFile(resp *http.Response) error {
 	}
 
 	// Not cached, make a request to the target site and store the result in the cache
-	var respBody []byte
-	respBody, err = io.ReadAll(resp.Body)
-	if err != nil {
+	const size = 11 << 7
+	respBody := make([]byte, 0, size)
+	if respBody, err = io.ReadAll(resp.Body); err != nil {
 		return err
 	}
 
@@ -51,6 +62,8 @@ func (proxy CacheableProxy) InterceptFile(resp *http.Response) error {
 		ExtraMetadata: make(map[string]string),
 	}
 
+	// Reassign the body so that it can be sent to the client
+	resp.Body = io.NopCloser(bytes.NewReader(respBody))
 	if proxy.isFileTracked(fileInfo) {
 		return proxy.storage.Set(cacheKey, fileInfo)
 	}
@@ -65,7 +78,14 @@ func checksum(body []byte) []byte {
 
 func (proxy CacheableProxy) isFileTracked(info FileInformation) bool {
 	for _, extension := range proxy.trackedExtensions {
+		mimeList := strings.Split(info.MimeType, ";")
 		if strings.EqualFold(info.Extension, extension) {
+			return true
+		}
+		if slices.ContainsFunc(
+			mimeList,
+			func(s string) bool { return strings.EqualFold(s, extension) },
+		) {
 			return true
 		}
 	}

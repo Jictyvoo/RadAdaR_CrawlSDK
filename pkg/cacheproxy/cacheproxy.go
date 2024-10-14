@@ -18,7 +18,7 @@ type (
 		targetURL         *url.URL
 		port              uint16
 		trackedExtensions []string
-		proxy             *httputil.ReverseProxy
+		reverse           *httputil.ReverseProxy
 	}
 )
 
@@ -29,13 +29,15 @@ func New(storage CacheStorage, targetURL string, port uint16) (*CacheableProxy, 
 	}
 
 	cacheableProxy := &CacheableProxy{
-		storage:   storage,
-		targetURL: target,
-		port:      port,
-		cacheTTL:  36 * time.Hour,
-		proxy:     httputil.NewSingleHostReverseProxy(target),
+		storage:           storage,
+		targetURL:         target,
+		port:              port,
+		cacheTTL:          36 * time.Hour,
+		reverse:           httputil.NewSingleHostReverseProxy(target),
+		trackedExtensions: []string{"text/html"},
 	}
-	cacheableProxy.proxy.ModifyResponse = cacheableProxy.InterceptFile
+	cacheableProxy.reverse.ModifyResponse = cacheableProxy.InterceptFile
+	cacheableProxy.reverse.Director = cacheableProxy.Director
 	return cacheableProxy, nil
 }
 
@@ -47,22 +49,26 @@ func (proxy CacheableProxy) Handler(w http.ResponseWriter, r *http.Request) {
 
 	cacheKey := proxy.cacheKey(r)
 	fileInfo, err := proxy.storage.Get(cacheKey)
-	if err != nil {
-		// Finally return proxy
-		proxy.proxy.ServeHTTP(w, r)
+	if err != nil || len(fileInfo.Checksum) <= 0 {
+		// Finally return reverse
+		proxy.reverse.ServeHTTP(w, r)
 		return
 	}
 
 	// Restore file response
-	_, err = w.Write(fileInfo.Content)
 	w.WriteHeader(int(fileInfo.Envelope.Status))
+	_, err = w.Write(fileInfo.Content)
 	if err != nil {
 		slog.Error("[ PROXY SERVER ] Error writing response", slog.String("error", err.Error()))
 	}
 }
 
+func (proxy CacheableProxy) serveHost() string {
+	return ":" + strconv.FormatUint(uint64(proxy.port), 10)
+}
+
 func (proxy CacheableProxy) Listen(ctx context.Context) error {
 	http.HandleFunc("/", proxy.Handler)
 
-	return http.ListenAndServe(":"+strconv.FormatUint(uint64(proxy.port), 10), nil)
+	return http.ListenAndServe(proxy.serveHost(), nil)
 }
