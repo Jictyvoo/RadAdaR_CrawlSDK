@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
-	"strconv"
 	"time"
 )
 
@@ -41,7 +40,7 @@ func New(storage CacheStorage, targetURL string, port uint16) (*CacheableProxy, 
 	return cacheableProxy, nil
 }
 
-func (proxy CacheableProxy) Handler(w http.ResponseWriter, r *http.Request) {
+func (proxy *CacheableProxy) Handler(w http.ResponseWriter, r *http.Request) {
 	slog.Info(
 		"[ PROXY SERVER ] Request received",
 		slog.String("URL", r.URL.String()), slog.Time("time", time.Now()),
@@ -63,12 +62,20 @@ func (proxy CacheableProxy) Handler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (proxy CacheableProxy) serveHost() string {
-	return ":" + strconv.FormatUint(uint64(proxy.port), 10)
-}
-
-func (proxy CacheableProxy) Listen(ctx context.Context) error {
+func (proxy *CacheableProxy) Listen(_ context.Context, startFeedback chan string) error {
 	http.HandleFunc("/", proxy.Handler)
+	if proxy.port == 0 {
+		listener, err := proxy.prepareListener()
+		if err != nil {
+			return err
+		}
 
-	return http.ListenAndServe(proxy.serveHost(), nil)
+		startFeedback <- proxy.ServeHost()
+
+		defer listener.Close()
+		return http.Serve(listener, nil)
+	}
+
+	startFeedback <- proxy.ServeHost()
+	return http.ListenAndServe(proxy.ServeHost(), nil)
 }

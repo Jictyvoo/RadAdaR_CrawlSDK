@@ -1,20 +1,50 @@
 package cacheproxy
 
 import (
+	"errors"
+	"net"
 	"net/http"
+	"strconv"
 
 	"github.com/jictyvoo/tcg_deck-resolver/pkg/httptransport"
 )
 
-func (proxy CacheableProxy) Director(req *http.Request) {
+func (proxy *CacheableProxy) Director(req *http.Request) {
 	req.URL.Scheme = proxy.targetURL.Scheme
 	req.URL.Host = proxy.targetURL.Host
 	req.Host = proxy.targetURL.Host
 	return
 }
 
-func (proxy CacheableProxy) RedirectRoundTripper() http.RoundTripper {
+func (proxy *CacheableProxy) RedirectRoundTripper() http.RoundTripper {
 	return httptransport.NewTransportRewrite(
-		proxy.targetURL, "localhost"+proxy.serveHost(),
+		proxy.targetURL, "localhost"+proxy.ServeHost(),
 	)
+}
+
+func (proxy *CacheableProxy) ServeHost() string {
+	return ":" + strconv.FormatUint(uint64(proxy.port), 10)
+}
+
+func (proxy *CacheableProxy) prepareListener() (net.Listener, error) {
+	listener, err := net.Listen("tcp", ":0")
+	if err != nil {
+		return nil, err
+	}
+	address := listener.Addr().String()
+	var index int
+	for index = len(address) - 1; index >= 0; index-- {
+		if address[index] == ':' {
+			break
+		}
+	}
+
+	var port uint64
+	if port, err = strconv.ParseUint(address[index+1:], 10, 16); err != nil {
+		err = errors.Join(err, listener.Close())
+		return nil, err
+	}
+
+	proxy.port = uint16(port)
+	return listener, nil
 }

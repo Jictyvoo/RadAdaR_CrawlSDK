@@ -13,7 +13,7 @@ import (
 	"time"
 )
 
-func (proxy CacheableProxy) cacheKey(req *http.Request) string {
+func (proxy *CacheableProxy) cacheKey(req *http.Request) string {
 	query, err := url.QueryUnescape(req.URL.RawQuery)
 	if err != nil {
 		query = req.URL.RawQuery
@@ -26,7 +26,7 @@ func (proxy CacheableProxy) cacheKey(req *http.Request) string {
 	return strings.TrimSpace(cacheKey)
 }
 
-func (proxy CacheableProxy) InterceptFile(resp *http.Response) error {
+func (proxy *CacheableProxy) InterceptFile(resp *http.Response) error {
 	// Get the requested file URL from the request
 	fileURL := resp.Request.RequestURI
 	cacheKey := proxy.cacheKey(resp.Request)
@@ -84,7 +84,7 @@ func checksum(body []byte) []byte {
 	return h[:]
 }
 
-func (proxy CacheableProxy) isFileTracked(info FileInformation) bool {
+func (proxy *CacheableProxy) isFileTracked(info FileInformation) bool {
 	for _, extension := range proxy.trackedExtensions {
 		mimeList := strings.Split(info.MimeType, ";")
 		if strings.EqualFold(info.Extension, extension) {
