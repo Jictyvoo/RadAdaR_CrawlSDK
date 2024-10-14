@@ -69,8 +69,8 @@ func decodeFileEnvelope(protoEnvelope *protodtos.Envelope) cacheproxy.FileEnvelo
 		Status:  uint16(protoEnvelope.GetStatus()),
 	}
 
-	for _, values := range protoEnvelope.GetHeaders() {
-		newEnvelope.Headers[values] = strings.Split(values, ",")
+	for key, values := range protoEnvelope.GetHeaders() {
+		newEnvelope.Headers[key] = strings.Split(values, ",")
 	}
 
 	return newEnvelope

@@ -2,6 +2,7 @@ package badgerepo
 
 import (
 	"log/slog"
+	"sync"
 	"time"
 
 	"github.com/dgraph-io/badger/v4"
@@ -12,6 +13,7 @@ import (
 type RemoteFileCache struct {
 	db       *badger.DB
 	entryTTL time.Duration
+	mutex    sync.Mutex
 }
 
 // NewRemoteFileCache initializes a new Badger database instance for the RemoteFileCache
@@ -27,6 +29,9 @@ func NewRemoteFileCache(dbPath string) (*RemoteFileCache, error) {
 
 // Set stores a key-value pair in the Badger database
 func (r *RemoteFileCache) Set(key string, information cacheproxy.FileInformation) error {
+	r.mutex.Lock()
+	defer r.mutex.Unlock()
+
 	err := r.db.Update(func(txn *badger.Txn) error {
 		valBytes, encodErr := EncodeFileInfo(information)
 		if encodErr != nil {
@@ -41,6 +46,9 @@ func (r *RemoteFileCache) Set(key string, information cacheproxy.FileInformation
 
 // Get retrieves a value by key from the Badger database
 func (r *RemoteFileCache) Get(key string) (cacheproxy.FileInformation, error) {
+	r.mutex.Lock()
+	defer r.mutex.Unlock()
+
 	var valCopy []byte
 	err := r.db.View(func(txn *badger.Txn) error {
 		item, err := txn.Get([]byte(key))
@@ -52,9 +60,10 @@ func (r *RemoteFileCache) Get(key string) (cacheproxy.FileInformation, error) {
 		return err
 	})
 	if err != nil {
-		slog.Error("Failed to get value", slog.String("key", key), slog.String("err", err.Error()))
+		return cacheproxy.FileInformation{}, err
 	}
 
+	slog.Info("Successfully loaded data from cache", slog.String("key", key))
 	return DecodeFileInfo(valCopy)
 }
 

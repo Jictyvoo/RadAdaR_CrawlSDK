@@ -2,7 +2,6 @@ package cacheproxy
 
 import (
 	"bytes"
-	"crypto/sha256"
 	"fmt"
 	"io"
 	"net/http"
@@ -39,9 +38,8 @@ func (proxy *CacheableProxy) InterceptFile(resp *http.Response) error {
 	}
 
 	// Not cached, make a request to the target site and store the result in the cache
-	const size = 11 << 7
-	respBody := make([]byte, 0, size)
-	if respBody, err = io.ReadAll(resp.Body); err != nil {
+	var respBody []byte
+	if respBody, err = bodyReader(resp.Body); err != nil {
 		return err
 	}
 
@@ -69,19 +67,6 @@ func (proxy *CacheableProxy) InterceptFile(resp *http.Response) error {
 	}
 
 	return nil
-}
-
-func fileMIME(respBody []byte, header http.Header) string {
-	if contentType := header.Get("Content-Type"); contentType != "" &&
-		contentType != "application/octet-stream" {
-		return contentType
-	}
-	return http.DetectContentType(respBody)
-}
-
-func checksum(body []byte) []byte {
-	h := sha256.Sum256(body)
-	return h[:]
 }
 
 func (proxy *CacheableProxy) isFileTracked(info FileInformation) bool {

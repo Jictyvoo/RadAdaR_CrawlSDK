@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"strings"
 	"time"
 )
 
@@ -33,7 +34,7 @@ func New(storage CacheStorage, targetURL string, port uint16) (*CacheableProxy, 
 		port:              port,
 		cacheTTL:          36 * time.Hour,
 		reverse:           httputil.NewSingleHostReverseProxy(target),
-		trackedExtensions: []string{"text/html"},
+		trackedExtensions: []string{"text/html", "image/jpeg"},
 	}
 	cacheableProxy.reverse.ModifyResponse = cacheableProxy.InterceptFile
 	cacheableProxy.reverse.Director = cacheableProxy.Director
@@ -55,6 +56,9 @@ func (proxy *CacheableProxy) Handler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Restore file response
+	for key, values := range fileInfo.Envelope.Headers {
+		w.Header().Set(key, strings.Join(values, ","))
+	}
 	w.WriteHeader(int(fileInfo.Envelope.Status))
 	_, err = w.Write(fileInfo.Content)
 	if err != nil {
