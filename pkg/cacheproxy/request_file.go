@@ -49,7 +49,7 @@ func (proxy CacheableProxy) InterceptFile(resp *http.Response) error {
 		FileMIME: FileMIME{
 			Name:      fileURL,
 			Extension: filepath.Ext(fileURL),
-			MimeType:  http.DetectContentType(respBody),
+			MimeType:  fileMIME(respBody, resp.Header),
 		},
 		Envelope: FileEnvelope{
 			Headers: resp.Header,
@@ -71,6 +71,14 @@ func (proxy CacheableProxy) InterceptFile(resp *http.Response) error {
 	return nil
 }
 
+func fileMIME(respBody []byte, header http.Header) string {
+	if contentType := header.Get("Content-Type"); contentType != "" &&
+		contentType != "application/octet-stream" {
+		return contentType
+	}
+	return http.DetectContentType(respBody)
+}
+
 func checksum(body []byte) []byte {
 	h := sha256.Sum256(body)
 	return h[:]
@@ -83,8 +91,7 @@ func (proxy CacheableProxy) isFileTracked(info FileInformation) bool {
 			return true
 		}
 		if slices.ContainsFunc(
-			mimeList,
-			func(s string) bool { return strings.EqualFold(s, extension) },
+			mimeList, func(s string) bool { return strings.EqualFold(s, extension) },
 		) {
 			return true
 		}
