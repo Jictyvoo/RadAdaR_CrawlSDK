@@ -5,6 +5,7 @@ go 1.23
 require (
 	github.com/dgraph-io/badger/v4 v4.3.1
 	github.com/go-rod/rod v0.116.2
+	github.com/temoto/robotstxt v1.1.2
 	google.golang.org/protobuf v1.35.1
 )
 
