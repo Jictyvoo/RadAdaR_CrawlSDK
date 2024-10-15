@@ -79,3 +79,20 @@ func (r *RemoteFileCache) Close() error {
 	}
 	return r.db.Close()
 }
+
+func (r *RemoteFileCache) Keys() (keys []string, err error) {
+	err = r.db.View(func(txn *badger.Txn) error {
+		opts := badger.DefaultIteratorOptions
+		opts.PrefetchValues = false
+		it := txn.NewIterator(opts)
+		defer it.Close()
+		for it.Rewind(); it.Valid(); it.Next() {
+			item := it.Item()
+			k := item.Key()
+			keys = append(keys, string(k))
+		}
+		return nil
+	})
+
+	return
+}
