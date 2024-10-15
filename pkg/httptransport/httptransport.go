@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-var defaultTransport = &http.Transport{
+var DefaultTransport = &http.Transport{
 	Proxy:                 http.ProxyFromEnvironment,
 	ForceAttemptHTTP2:     false,
 	MaxIdleConns:          100,

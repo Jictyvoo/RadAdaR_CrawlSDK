@@ -17,7 +17,7 @@ func NewTransportRewrite(originRoute *url.URL, redirectRoute string) *TransportR
 	return &TransportRewrite{
 		originRoute:   originRoute,
 		redirectRoute: redirectRoute,
-		Transport:     defaultTransport,
+		Transport:     DefaultTransport,
 	}
 }
 
