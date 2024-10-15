@@ -1,6 +1,7 @@
 package badgerepo
 
 import (
+	"context"
 	"log/slog"
 	"sync"
 	"time"
@@ -11,9 +12,10 @@ import (
 )
 
 type RemoteFileCache struct {
-	db       *badger.DB
-	entryTTL time.Duration
-	mutex    sync.Mutex
+	db            *badger.DB
+	entryTTL      time.Duration
+	mutex         sync.Mutex
+	finishThreads context.CancelFunc
 }
 
 // NewRemoteFileCache initializes a new Badger database instance for the RemoteFileCache
@@ -24,7 +26,10 @@ func NewRemoteFileCache(dbPath string) (*RemoteFileCache, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &RemoteFileCache{db: db, entryTTL: 36 * time.Hour}, nil
+
+	ctx, cancel := context.WithCancel(context.Background())
+	go gcThread(ctx, db)
+	return &RemoteFileCache{db: db, entryTTL: 36 * time.Hour, finishThreads: cancel}, nil
 }
 
 // Set stores a key-value pair in the Badger database
@@ -37,7 +42,7 @@ func (r *RemoteFileCache) Set(key string, information cacheproxy.FileInformation
 		if encodErr != nil {
 			return encodErr
 		}
-		badgerEntry := badger.NewEntry([]byte(key), valBytes).WithTTL(r.entryTTL)
+		badgerEntry := badger.NewEntry([]byte(key), valBytes).WithTTL(r.entryTTL).WithDiscard()
 		return txn.SetEntry(badgerEntry)
 	})
 
@@ -69,5 +74,8 @@ func (r *RemoteFileCache) Get(key string) (cacheproxy.FileInformation, error) {
 
 // Close closes the Badger database
 func (r *RemoteFileCache) Close() error {
+	if r.finishThreads != nil {
+		r.finishThreads()
+	}
 	return r.db.Close()
 }
