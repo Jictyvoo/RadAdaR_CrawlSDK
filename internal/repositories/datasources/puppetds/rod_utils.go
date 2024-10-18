@@ -4,15 +4,14 @@ import (
 	"time"
 
 	"github.com/go-rod/rod"
-	"github.com/ysmood/gson"
 )
 
 func obtainJSValues[T any](
 	page *rod.Page, jsCode string, dst *T,
-) (gson.JSON, error) {
+) (any, error) {
 	runtimeObj, err := page.Eval(jsCode)
 	if runtimeObj == nil || err != nil {
-		return gson.JSON{}, err
+		return nil, err
 	}
 
 	resultVal := runtimeObj.Value
@@ -24,7 +23,7 @@ func obtainJSValues[T any](
 	case *float64:
 		*destinationPointer = resultVal.Num()
 	}
-	return runtimeObj.Value, nil
+	return runtimeObj.Value.Val(), nil
 }
 
 func scrollPageDown(page *rod.Page) (err error) {
