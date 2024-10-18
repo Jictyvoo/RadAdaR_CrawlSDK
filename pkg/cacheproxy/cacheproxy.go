@@ -66,20 +66,45 @@ func (proxy *CacheableProxy) Handler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (proxy *CacheableProxy) Listen(_ context.Context, startFeedback chan string) error {
-	http.HandleFunc("/", proxy.Handler)
-	if proxy.port == 0 {
-		listener, err := proxy.prepareListener()
-		if err != nil {
-			return err
-		}
+func (proxy *CacheableProxy) Listen(
+	ctx context.Context, startFeedback chan string,
+) error { // Create a new server instance
 
-		startFeedback <- proxy.ServeHost()
-
-		defer listener.Close()
-		return http.Serve(listener, nil)
+	serveMux := http.NewServeMux()
+	serveMux.HandleFunc("/", proxy.Handler)
+	server := &http.Server{
+		Addr:    proxy.ServeHost(),
+		Handler: serveMux,
 	}
 
+	listener, err := proxy.prepareListener()
+	if err != nil {
+		return err
+	}
+
+	// Create a channel to listen for errors from the server
+	errChan := make(chan error, 1)
+	defer listener.Close()
+
 	startFeedback <- proxy.ServeHost()
-	return http.ListenAndServe(proxy.ServeHost(), nil)
+	go func() {
+		errChan <- server.Serve(listener)
+	}()
+
+	// Listen for the context cancellation (graceful shutdown trigger)
+	select {
+	case <-ctx.Done():
+		// Shutdown the server gracefully
+		shutdownCtx, cancel := context.WithTimeout(context.Background(), time.Minute>>1)
+		defer cancel()
+
+		shutdownErr := server.Shutdown(shutdownCtx)
+		if shutdownErr != nil {
+			return shutdownErr
+		}
+		return ctx.Err() // Return the cancellation error
+	case err = <-errChan:
+		// If an error occurred while starting the server
+		return err
+	}
 }

@@ -27,10 +27,15 @@ func (proxy *CacheableProxy) ServeHost() string {
 }
 
 func (proxy *CacheableProxy) prepareListener() (net.Listener, error) {
-	listener, err := net.Listen("tcp", ":0")
+	listener, err := net.Listen("tcp", proxy.ServeHost())
 	if err != nil {
 		return nil, err
 	}
+
+	if proxy.port != 0 {
+		return listener, nil
+	}
+
 	address := listener.Addr().String()
 	var index int
 	for index = len(address) - 1; index >= 0; index-- {
@@ -45,6 +50,7 @@ func (proxy *CacheableProxy) prepareListener() (net.Listener, error) {
 		return nil, err
 	}
 
+	// Update port with bound on listener
 	proxy.port = uint16(port)
 	return listener, nil
 }
