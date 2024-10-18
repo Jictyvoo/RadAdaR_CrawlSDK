@@ -8,7 +8,7 @@ type Factory[T any] interface {
 }
 
 type GenericFactory[T any] struct {
-	injector    remy.Injector
+	injector    remy.DependencyRetriever
 	useKey      string
 	constructor func() T
 }
@@ -17,7 +17,7 @@ func NewConstructorFactory[T any](constructor func() T) Factory[T] {
 	return GenericFactory[T]{constructor: constructor}
 }
 
-func NewInjectionFactory[T any](injector remy.Injector, useKey string) Factory[T] {
+func NewInjectionFactory[T any](injector remy.DependencyRetriever, useKey string) Factory[T] {
 	return GenericFactory[T]{injector: injector, useKey: useKey}
 }
 

@@ -27,8 +27,8 @@ func (t *TransportRewrite) RoundTrip(req *http.Request) (*http.Response, error) 
 		// Rewrite the request URL to localhost
 		slog.Info(
 			"Redirecting host URL",
-			slog.String("host", t.redirectRoute),
 			slog.String("origin", req.URL.Host),
+			slog.String("redirect2-host", t.redirectRoute),
 		)
 		req.URL.Host = t.redirectRoute
 		req.URL.Scheme = "http"
