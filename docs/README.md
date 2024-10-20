@@ -1,8 +1,18 @@
-# Crawler SDK
+# RadAdar Crawler SDK
 
-A lightweight and efficient SDK designed to create web crawler applications while ensuring responsible behavior towards
-target servers. The SDK achieves this by incorporating a proxy cache layer for all requests, minimizing direct
-interactions with target servers and reducing the risk of overwhelming them.
+<table>
+  <tr>
+    <td style="width: 30%">
+      <img src="icon.png" alt="SDK Image" style="width: max-content" />
+    </td>
+    <td style="width: 70%;">
+      A lightweight and efficient SDK designed to create web crawler applications while ensuring responsible behavior towards target servers.
+      The SDK achieves this by incorporating a proxy cache layer for all requests, minimizing direct interactions with target servers and reducing the risk of overwhelming them.
+      <br /><br />
+      Take a look on the name, "RadAdar", when read forward and backward, the letters spell out "Rada Rada" - a reference made using mirrored symmetry!
+    </td>
+  </tr>
+</table>
 
 ## Features
 
