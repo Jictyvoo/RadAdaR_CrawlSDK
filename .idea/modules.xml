@@ -2,7 +2,8 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/tcg_deck-resolver.iml" filepath="$PROJECT_DIR$/.idea/tcg_deck-resolver.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/radadar_crawlsdk.iml"
+        filepath="$PROJECT_DIR$/.idea/tcg_deck-resolver.iml" />
     </modules>
   </component>
 </project>
