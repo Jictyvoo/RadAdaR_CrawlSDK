@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/jictyvoo/tcg_deck-resolver/pkg/httptransport"
+	"github.com/jictyvoo/radadar_crawlsdk/pkg/httptransport"
 )
 
 type HTTPDatasource struct {

@@ -6,8 +6,8 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/jictyvoo/tcg_deck-resolver/internal/protodtos"
-	"github.com/jictyvoo/tcg_deck-resolver/pkg/cacheproxy"
+	"github.com/jictyvoo/radadar_crawlsdk/internal/protodtos"
+	"github.com/jictyvoo/radadar_crawlsdk/pkg/cacheproxy"
 )
 
 func EncodeFileInfo(fileInfo cacheproxy.FileInformation) ([]byte, error) {

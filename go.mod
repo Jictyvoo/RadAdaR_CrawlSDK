@@ -1,4 +1,4 @@
-module github.com/jictyvoo/tcg_deck-resolver
+module github.com/jictyvoo/radadar_crawlsdk
 
 go 1.23
 

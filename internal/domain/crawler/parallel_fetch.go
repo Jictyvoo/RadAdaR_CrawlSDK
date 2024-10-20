@@ -6,7 +6,7 @@ import (
 	"log/slog"
 	"sync"
 
-	"github.com/jictyvoo/tcg_deck-resolver/pkg/datatypes"
+	"github.com/jictyvoo/radadar_crawlsdk/pkg/datatypes"
 )
 
 type (

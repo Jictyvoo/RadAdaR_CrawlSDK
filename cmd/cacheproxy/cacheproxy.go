@@ -12,8 +12,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/jictyvoo/tcg_deck-resolver/internal/repositories/badgerepo"
-	"github.com/jictyvoo/tcg_deck-resolver/pkg/cacheproxy"
+	"github.com/jictyvoo/radadar_crawlsdk/internal/repositories/badgerepo"
+	"github.com/jictyvoo/radadar_crawlsdk/pkg/cacheproxy"
 )
 
 func main() {

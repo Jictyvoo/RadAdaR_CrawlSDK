@@ -8,7 +8,7 @@ import (
 
 	"github.com/dgraph-io/badger/v4"
 
-	"github.com/jictyvoo/tcg_deck-resolver/pkg/cacheproxy"
+	"github.com/jictyvoo/radadar_crawlsdk/pkg/cacheproxy"
 )
 
 type RemoteFileCache struct {

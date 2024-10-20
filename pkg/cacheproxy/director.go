@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/jictyvoo/tcg_deck-resolver/pkg/httptransport"
+	"github.com/jictyvoo/radadar_crawlsdk/pkg/httptransport"
 )
 
 func (proxy *CacheableProxy) Director(req *http.Request) {
